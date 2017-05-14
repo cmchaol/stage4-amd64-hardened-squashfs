@@ -1,13 +1,26 @@
+* goals
+
+|    | stage4 | docker | squashfs |
+|----+--------+--------+----------|
+| 30 | v      |        |          |
+|    |        |        |          |
+| 40 | v      | v      |          |
+|    |        |        |          |
+|    |        |        |          |
+
+
 * steps
 
-|       |        |            |
-| steps | github | docker hub |
-|-------+--------+------------|
-|       | clone  |            |
-|       |        |            |
+|       |        |            |            |
+| steps | github | docker hub |            |
+|       |        |            |            |
+|-------+--------+------------+------------|
+|    20 | clone  |            |            |
+|       |        |            |            |
+|    90 |        |            | references |
+|       |        |            |            |
 
 ** 20
-
 
 #+HEADERS: :dir /tmp
 #+BEGIN_SRC sh
@@ -18,4 +31,33 @@ git config user.email "cmchaol@users.noreply.github.com"
 git config user.name "cmchaol"
 
 #+END_SRC
+
+
+** 30
+
+| locate the url    |
+|                   |
+| download the file |
+|                   |
+|                   |
+
+ul="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt"
+
+curl $ul
+
+
+
+
+
+
+** 90
+
+http://distfiles.gentoo.org/releases/amd64/autobuilds/
+
+
+http://distfiles.gentoo.org/releases/amd64/autobuilds/current-stage4-amd64-hardened+minimal/
+
+
+https://github.com/gentoo/gentoo-docker-images
+
 
