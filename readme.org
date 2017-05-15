@@ -1,12 +1,16 @@
+
+https://github.com/cmchaol/stage4-amd64-hardened-squashfs
+
+
 * goals
 
-|    | stage4 | docker | squashfs |
-|----+--------+--------+----------|
-| 30 | v      |        |          |
-|    |        |        |          |
-| 40 | v      | v      |          |
-|    |        |        |          |
-|    |        |        |          |
+|    | stage4       | docker     | squashfs |
+|----+--------------+------------+----------|
+| 30 | shell script |            |          |
+|    |              |            |          |
+| 40 |              | Dockerfile |          |
+|    |              |            |          |
+|    |              |            |          |
 
 
 * steps
@@ -19,6 +23,54 @@
 |       |        |            |            |
 |    90 |        |            | references |
 |       |        |            |            |
+
+** 40 
+
+Dockerfile
+
+dt="/tmp/dockertest"
+
+mkdir $dt
+
+cd $dt
+
+
+cat > Dockerfile << EOF
+FROM alpine:3.5 as builder
+
+WORKDIR /tmp/gentoo
+
+RUN apk add --no-cache gnupg tar \
+ && U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt" \
+ && U2=$(wget -q -O- $U1 | awk '/stage4/ {print $1}') \
+ && U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/" \
+ && wget -q -c $U3$U2 $U3$U2.CONTENTS $U3$U2.DIGESTS.asc \
+ && SIGNING_KEY="0xBB572E0E2D182910" \
+ && gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys ${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys ${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys ${SIGNING_KEY} \
+ && gpg --verify *.DIGESTS.asc \
+ && awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c \
+ && tar xjpf stage4*.bz2 --xattrs --numeric-owner \
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
+ && echo 'UTC' > etc/timezone \
+ && rm stage4*
+
+
+FROM scratch
+
+WORKDIR /
+COPY --from=builder /tmp/gentoo/ /
+CMD ["/bin/bash"]
+EOF
+
+
+docker build -t c5766/mystage4 .
+
+docker run -it c5766/mystage4
+
+
+
 
 ** 20
 
@@ -43,6 +95,97 @@ git config user.name "cmchaol"
 |                   |
 | verify            |
 
+|        | aims                         |
+|--------+------------------------------|
+| U1     | find the date of the stage4  |
+|        |                              |
+| U2     | find the 2nd half of the url |
+|        |                              |
+| U3     | the 1st half of the url      |
+|        |                              |
+| $U3$U2 | the url of the stage4        |
+|        |                              |
+
+
+
+*** Dockerfile
+
+dt="/tmp/dockertest"
+
+mkdir $dt
+
+cd $dt
+
+
+cat > Dockerfile << EOF
+FROM ${BOOTSTRAP:-alpine:3.5} as builder
+
+WORKDIR /tmp/gentoo
+
+RUN apk add --no-cache gnupg tar \
+ && U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt" \
+ && U2=$(wget -q -O- $U1 | awk '/stage4/ {print $1}') \
+ && U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/" \
+ && wget -q -c $U3$U2 $U3$U2.CONTENTS $U3$U2.DIGESTS.asc \
+ && SIGNING_KEY="0xBB572E0E2D182910" \
+ && gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys ${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys ${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys ${SIGNING_KEY} \
+ && gpg --verify *.DIGESTS.asc \
+ && awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c \
+ && tar xjpf stage4*.bz2 --xattrs --numeric-owner \
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
+ && echo 'UTC' > etc/timezone \
+ && rm stage4*
+
+
+FROM scratch
+
+WORKDIR /
+COPY --from=builder /tmp/gentoo/ /
+CMD ["/bin/bash"]
+EOF
+
+
+docker build -t c5766/mystage4 .
+
+docker run -it c5766/mystage4
+
+*** shell script conclusion
+
+wd="/tmp/gentoo"   # workdir
+
+mkdir $wd
+
+cd $wd
+
+
+U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt"
+
+U2=$(wget -q -O- $U1 | awk '/stage4/ {print $1}')
+
+U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/"
+
+
+wget -q -c $U3$U2 $U3$U2.CONTENTS $U3$U2.DIGESTS.asc
+
+
+SIGNING_KEY="0xBB572E0E2D182910"
+
+gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys ${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys ${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys ${SIGNING_KEY} \
+gpg --verify *.DIGESTS.asc
+
+awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c 
+
+
+
+
+
+*** draft
+
+
 ul="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt"
 
 curl $ul
@@ -51,11 +194,15 @@ wget -q -O- $ul
 
 wget -q -O- $ul | tail -n 1
 
-wget -q -O- $ul | awk 'END { print $1}'  # the 2nd half path of the url $ul2
+wget -q -O- $ul | awk 'END {print $1}'  # the 2nd half path of the url $ul2
 
-wget -q -O- $ul | awk 'END { print $2}'
+wget -q -O- $ul | awk 'END {print $2}'  # END
 
-ul2=$(wget -q -O- $ul | awk 'END { print $1}')
+wget -q -O- $ul | awk '/stage4/ {print $1}'   # //
+
+ul2=$(wget -q -O- $ul | awk 'END {print $1}')
+
+ul2=$(wget -q -O- $ul | awk '/stage4/ {print $1}')
 
 echo $ul2    # 20170504/hardened/stage4-amd64-hardened+minimal-20170504.tar.bz2
 
@@ -67,7 +214,11 @@ wget -q $ul3$ul2
 
 wget -q $ul3$ul2.CONTENTS
 
-wget -q $ul3$ul2.CONTENTS.asc
+wget -q $ul3$ul2.DIGESTS.asc
+
+wget -q -c $ul3$ul2 $ul3$ul2.CONTENTS $ul3$ul2.DIGESTS.asc
+
+
 
 
 wget -q -O- $ul3$ul2.DIGESTS.asc	
@@ -78,9 +229,11 @@ wget -q -O- $ul3$ul2.DIGESTS.asc | grep 512 -A 1
 
 SIGNING_KEY="0xBB572E0E2D182910"
 
-gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys ${SIGNING_KEY} 
+gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys ${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys ${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys ${SIGNING_KEY} \
+gpg --verify *.DIGESTS.asc
 
-gpg --verify 	*.DIGESTS.asc
 
 awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c 
 
