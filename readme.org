@@ -4,29 +4,161 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
 * goals
 
-|    | stage4       | docker     | squashfs |
-|----+--------------+------------+----------|
-| 30 | shell script |            |          |
-|    |              |            |          |
-| 40 |              | Dockerfile |          |
-|    |              |            |          |
-|    |              |            |          |
+|    | stage4       | docker                   | squashfs |
+|----+--------------+--------------------------+----------|
+| 30 | shell script |                          |          |
+|    |              |                          |          |
+| 40 |              | multi-stage build        |          |
+|    |              |                          |          |
+| 42 |              | before multi-stage build |          |
+|    |              |                          |          |
 
 
-* steps
+|       |                                |            |            |
+| steps | github                         | docker hub |            |
+|       |                                |            |            |
+|-------+--------------------------------+------------+------------|
+|    20 | clone                          |            |            |
+|       | stage4-amd64-hardened-squashfs |            |            |
+|       |                                |            |            |
+|    22 | clone                          |            |            |
+|       | stage4-amd64-hardened-minimal  |            |            |
+|       |                                |            |            |
+|    80 |                                |            |            |
+|       |                                |            |            |
+|    90 |                                |            | references |
+|       |                                |            |            |
 
-|       |        |            |            |
-| steps | github | docker hub |            |
-|       |        |            |            |
-|-------+--------+------------+------------|
-|    20 | clone  |            |            |
-|       |        |            |            |
-|    90 |        |            | references |
-|       |        |            |            |
+
+** 22
+
+
+#+HEADERS: :dir /tmp
+#+BEGIN_SRC sh
+
+git clone git@github.com:cmchaol/stage4-amd64-hardened-minimal.git
+
+cd stage4-amd64-hardened-minimal
+
+git config user.email "cmchaol@users.noreply.github.com"
+
+git config user.name "cmchaol"
+
+#+END_SRC
+
+#+RESULTS:
 
 
 
-** 40 test
+
+** 80
+
+https://hub.docker.com/
+
+stage4-amd64-hardened+minimal
+
+
+
+
+** 42 
+
+builder pattern
+
+http://blog.alexellis.io/mutli-stage-docker-builds/
+
+
+| host  | first docker image | second docker image |
+|       | big                | small               |
+|-------+--------------------+---------------------|
+|       |                    |                     |
+|       | build              |                     |
+|       |                    |                     |
+|       | cp to the host     |                     |
+| files |                    |                     |
+|       |                    | build               |
+|       |                    | add the files       |
+
+Dockerfile
+
+dt="/tmp/dockertest"
+
+mkdir $dt
+
+cd $dt
+
+
+
+cat > Dockerfile << EOF
+FROM alpine:3.5 as builder
+
+WORKDIR /tmp/gentoo
+
+RUN apk add --no-cache \
+ gnupg \
+ tar \
+ && U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt" \
+ && U2=\$(wget -q -O- $U1 | awk '/stage4/ {print \$1}') \
+ && U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/" \
+ && wget -q -c \$U3\$U2 \$U3\$U2.CONTENTS \$U3\$U2.DIGESTS.asc \
+ && SIGNING_KEY="0xBB572E0E2D182910" \
+ && gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys \${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys \${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys \${SIGNING_KEY} \
+ && gpg --verify *.DIGESTS.asc \
+ && awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c \
+ && tar xjpf stage4*.bz2 --xattrs --numeric-owner \
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
+ && echo 'UTC' > etc/timezone \
+ && rm stage4*
+
+
+FROM scratch
+
+WORKDIR /
+COPY --from=builder /tmp/gentoo/ /
+CMD ["/bin/bash"]
+EOF
+
+
+
+cat > Dockerfile << EOF
+FROM alpine
+
+ARG U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt"
+ARG U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/"
+
+RUN U2=\$(wget -q -O- \$U1 | awk '/stage4/ {print \$1}') \\
+ && wget \$U3\$U2 \\
+ && tar xjpf stage4*.bz2 \\
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \\
+ && echo 'UTC' > etc/timezone \\
+ && rm stage4*
+
+CMD ["/bin/bash"]
+EOF
+
+
+
+docker build -t c5766/mystage4 .
+
+docker run -it c5766/mystage4
+
+
+
+
+
+U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt"
+U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/"
+
+U2=$(wget -q -O- $U1 | awk '/stage4/ {print $1}') 
+
+echo $U3$U2
+
+
+
+
+
+** 40 
 
 Dockerfile
 
@@ -113,91 +245,6 @@ docker run -it c5766/mystage4
 http://gentoo.osuosl.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt
 
 
-
-
-** 40 
-
-Dockerfile
-
-dt="/tmp/dockertest"
-
-mkdir $dt
-
-cd $dt
-
-#  distfiles.gentoo.org
-
-cat > Dockerfile << EOF
-FROM alpine:3.5 as builder
-
-WORKDIR /tmp/gentoo
-
-RUN apk add --no-cache gnupg tar \
- && U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt" \
- && U2=\$(wget -q -O- $U1 | awk '/stage4/ {print \$1}') \
- && U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/" \
- && wget -q -c \$U3\$U2 \$U3\$U2.CONTENTS \$U3\$U2.DIGESTS.asc \
- && SIGNING_KEY="0xBB572E0E2D182910" \
- && gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys \${SIGNING_KEY} \
- || gpg --keyserver keys.gnupg.net --recv-keys \${SIGNING_KEY} \                       
- || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys \${SIGNING_KEY} \
- && gpg --verify *.DIGESTS.asc \
- && awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c \
- && tar xjpf stage4*.bz2 --xattrs --numeric-owner \
- && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
- && echo 'UTC' > etc/timezone \
- && rm stage4*
-
-
-FROM scratch
-
-WORKDIR /
-COPY --from=builder /tmp/gentoo/ /
-CMD ["/bin/bash"]
-EOF
-
-
-# gentoo.osuosl.org
-
-
-
-cat > Dockerfile << EOF
-FROM alpine:3.5 as builder
-
-WORKDIR /tmp/gentoo
-
-RUN apk add --no-cache gnupg tar \
- && U1="http://gentoo.osuosl.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt" \
- && U2=\$(wget -q -O- $U1 | awk '/stage4/ {print \$1}') \
- && U3="http://gentoo.osuosl.org/releases/amd64/autobuilds/" \
- && wget -q -c \$U3\$U2 \$U3\$U2.CONTENTS \$U3\$U2.DIGESTS.asc \
- && SIGNING_KEY="0xBB572E0E2D182910" \
- && gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys \${SIGNING_KEY} \
- || gpg --keyserver keys.gnupg.net --recv-keys \${SIGNING_KEY} \                       
- || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys \${SIGNING_KEY} \
- && gpg --verify *.DIGESTS.asc \
- && awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c \
- && tar xjpf stage4*.bz2 --xattrs --numeric-owner \
- && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
- && echo 'UTC' > etc/timezone \
- && rm stage4*
-
-
-FROM scratch
-
-WORKDIR /
-COPY --from=builder /tmp/gentoo/ /
-CMD ["/bin/bash"]
-EOF
-
-
-
-docker build -t c5766/mystage4 .
-
-docker run -it c5766/mystage4
-
-
-http://gentoo.osuosl.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt
 
 
 
