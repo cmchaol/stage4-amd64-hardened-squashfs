@@ -46,6 +46,7 @@ export an source block to Dockerfile.
 
 #+END_SRC
 
+- foo
     #+HEADER:  :tangle Dockerfile
     #+BEGIN_SRC sh
 
