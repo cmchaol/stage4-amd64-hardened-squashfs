@@ -46,6 +46,11 @@ export an source block to Dockerfile.
 
 #+END_SRC
 
+ : #+HEADER:  :tangle Dockerfile
+ : #+BEGIN_SRC sh
+ : 
+ : #+END_SRC
+
 
 ```javascript
 #+HEADER:  :tangle Dockerfile
