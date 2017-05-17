@@ -38,7 +38,7 @@ export an source block to Dockerfile.
 
 | place the cursor inside the source block |
 |                                          |
-| C-c C-v t                                |
+| C-u C-c C-v t                            |
 
 
 #+HEADER:  :tangle Dockerfile
@@ -52,24 +52,16 @@ export an source block to Dockerfile.
  : #+END_SRC
 
 
-```javascript
-#+HEADER:  :tangle Dockerfile
-#+BEGIN_SRC sh
-
-#+END_SRC
-```
-
-
-> #+HEADER:  :tangle Dockerfile
-> #+BEGIN_SRC sh
-> 
-> #+END_SRC
-
-
 org-babel-tangle
 Tangle the current file. Bound to C-c C-v t.
 
 http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
+
+
+With one universal prefix argument, only tangle the block at point. When two universal prefix arguments, only tangle blocks for the tangle file of the block at point.
+
+http://stackoverflow.com/questions/28727190/org-babel-tangle-only-one-code-block
+
 
 
 Normally Org generates the file name based on the buffer name and the extension based on the back-end format. For sub-trees, Org can export to a file name as specified in the EXPORT_FILE_NAME property.
@@ -86,12 +78,6 @@ http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
 | org file | tangle | code for execution |
 |          |        |                    |
 |          |        |                    |
-
-
-#+HEADER:  :tangle Dockerfile
-#+BEGIN_SRC sh
-
-#+END_SRC
 
 
 
