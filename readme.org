@@ -46,11 +46,13 @@ export an source block to Dockerfile.
 
 #+END_SRC
 
-- foo
-    #+HEADER:  :tangle Dockerfile
-    #+BEGIN_SRC sh
 
-    #+END_SRC
+```
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+#+END_SRC
+```
 
 org-babel-tangle
 Tangle the current file. Bound to C-c C-v t.
