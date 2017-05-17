@@ -26,37 +26,62 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 |       |                                |            |            |
 |    80 |                                |            |            |
 |       |                                |            |            |
-|    90 |                                |            | references |
+|    90 | Dockerfile example             |            | references |
+|       |                                |            |            |
+|    94 | org export block to Dockerfile |            |            |
 |       |                                |            |            |
 
 
-** 22
+** 94
 
 
-#+HEADERS: :dir /tmp
+export an source block to Dockerfile.
+
+| place the cursor inside the source block |
+|                                          |
+| C-c C-v t                                |
+
+
+#+HEADER:  :tangle Dockerfile
 #+BEGIN_SRC sh
-
-git clone git@github.com:cmchaol/stage4-amd64-hardened-minimal.git
-
-cd stage4-amd64-hardened-minimal
-
-git config user.email "cmchaol@users.noreply.github.com"
-
-git config user.name "cmchaol"
 
 #+END_SRC
 
-#+RESULTS:
+#+BEGIN_EXAMPLE
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+#+END_SRC
+
+#+END_EXAMPLE
+
+org-babel-tangle
+Tangle the current file. Bound to C-c C-v t.
+
+http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
 
 
+Normally Org generates the file name based on the buffer name and the extension based on the back-end format. For sub-trees, Org can export to a file name as specified in the EXPORT_FILE_NAME property.
+
+http://orgmode.org/manual/Export-settings.html
 
 
-** 80
+14.4 Extracting source code
 
-https://hub.docker.com/
+http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
 
-stage4-amd64-hardened+minimal
+| sources  | verb   | output             |
+|----------+--------+--------------------|
+| org file | tangle | code for execution |
+|          |        |                    |
+|          |        |                    |
 
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+#+END_SRC
 
 
 
@@ -153,6 +178,35 @@ U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/"
 U2=$(wget -q -O- $U1 | awk '/stage4/ {print $1}') 
 
 echo $U3$U2
+
+
+** 22
+
+
+#+HEADERS: :dir /tmp
+#+BEGIN_SRC sh
+
+git clone git@github.com:cmchaol/stage4-amd64-hardened-minimal.git
+
+cd stage4-amd64-hardened-minimal
+
+git config user.email "cmchaol@users.noreply.github.com"
+
+git config user.name "cmchaol"
+
+#+END_SRC
+
+#+RESULTS:
+
+
+
+
+** 80
+
+
+https://hub.docker.com/
+
+stage4-amd64-hardened+minimal
 
 
 
