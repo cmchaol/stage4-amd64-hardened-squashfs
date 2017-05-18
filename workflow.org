@@ -1,0 +1,641 @@
+
+https://github.com/cmchaol/stage4-amd64-hardened-squashfs
+
+
+* goals
+
+|    | stage4       | docker                   | squashfs |
+|----+--------------+--------------------------+----------|
+| 30 | shell script |                          |          |
+|    |              |                          |          |
+| 40 |              | multi-stage build        |          |
+|    |              |                          |          |
+| 42 |              | before multi-stage build |          |
+|    |              |                          |          |
+| 44 |              | follow handbook          |          |
+
+
+|       |                                |            |                      |
+| steps | github                         | docker hub |                      |
+|       |                                |            |                      |
+|-------+--------------------------------+------------+----------------------|
+|    20 | clone                          |            |                      |
+|       | stage4-amd64-hardened-squashfs |            |                      |
+|       |                                |            |                      |
+|    22 | clone                          |            |                      |
+|       | stage4-amd64-hardened-minimal  |            |                      |
+|       |                                |            |                      |
+|    80 |                                |            |                      |
+|       |                                |            |                      |
+|    90 | Dockerfile example             |            | references           |
+|       |                                |            |                      |
+|    94 | org export block to Dockerfile |            |                      |
+|       |                                |            |                      |
+|    96 |                                |            | automated build flow |
+|       |                                |            |                      |
+|    98 |                                |            |                      |
+
+** 96
+
+| step | test docker host | github            | docker hub             |
+|------+------------------+-------------------+------------------------|
+|    2 | test build       |                   |                        |
+|      |                  |                   |                        |
+|    4 |                  | create repository |                        |
+|      |                  |                   |                        |
+|    6 |                  |                   | create automated build |
+|      |                  |                   |                        |
+
+
+** 44
+
+
+
+
+
+*** test build
+
+docker run -it gentoo/stage3-amd64-hardened
+
+https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Base
+
+# mkdir /mnt/gentoo/etc/portage/repos.conf
+
+  mkdir /etc/portage/repos.conf
+
+# cp /mnt/gentoo/usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
+
+  cp /usr/share/portage/config/repos.conf /etc/portage/repos.conf/gentoo.conf
+
+cat /etc/portage/repos.conf/gentoo.conf
+
+emerge-webrsync
+
+eselect profile set hardened/linux/amd64
+
+eselect profile list
+
+echo "Asia/Taipei" > /etc/timezone
+
+emerge --config sys-libs/timezone-data
+
+sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+
+locale-gen
+
+eselect locale set en_US.utf8
+
+. /etc/profile
+
+
+echo "sys-kernel/hardened-sources symlink" >> /etc/portage/package.use/hardened-sources
+
+cat /etc/portage/package.use/hardened-sources
+
+emerge sys-kernel/hardened-sources -pv
+
+emerge sys-kernel/hardened-sources
+
+
+
+
+docker build -t c5766/mystage4 .
+
+docker run -it c5766/mystage4
+
+
+
+
+
+** 42 
+
+builder pattern
+
+http://blog.alexellis.io/mutli-stage-docker-builds/
+
+
+| host  | first docker image | second docker image |
+|       | big                | small               |
+|-------+--------------------+---------------------|
+|       |                    |                     |
+|       | build              |                     |
+|       |                    |                     |
+|       | cp to the host     |                     |
+| files |                    |                     |
+|       |                    | build               |
+|       |                    | add the files       |
+
+
+
+** 94
+
+export an source block to Dockerfile.
+
+| place the cursor inside the source block |
+|                                          |
+| C-u C-c C-v t                            |
+
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+#+END_SRC
+
+ : #+HEADER:  :tangle Dockerfile
+ : #+BEGIN_SRC sh
+ : 
+ : #+END_SRC
+
+
+org-babel-tangle
+Tangle the current file. Bound to C-c C-v t.
+
+http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
+
+
+With one universal prefix argument, only tangle the block at point. When two universal prefix arguments, only tangle blocks for the tangle file of the block at point.
+
+http://stackoverflow.com/questions/28727190/org-babel-tangle-only-one-code-block
+
+
+
+Normally Org generates the file name based on the buffer name and the extension based on the back-end format. For sub-trees, Org can export to a file name as specified in the EXPORT_FILE_NAME property.
+
+http://orgmode.org/manual/Export-settings.html
+
+
+14.4 Extracting source code
+
+http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
+
+| sources  | verb   | output             |
+|----------+--------+--------------------|
+| org file | tangle | code for execution |
+|          |        |                    |
+|          |        |                    |
+
+
+** 22
+
+
+#+HEADERS: :dir /tmp
+#+BEGIN_SRC sh
+
+git clone git@github.com:cmchaol/stage4-amd64-hardened-minimal.git
+
+cd stage4-amd64-hardened-minimal
+
+git config user.email "cmchaol@users.noreply.github.com"
+
+git config user.name "cmchaol"
+
+#+END_SRC
+
+#+RESULTS:
+
+
+
+
+** 80
+
+
+https://hub.docker.com/
+
+stage4-amd64-hardened+minimal
+
+
+
+
+
+** 40 
+
+Dockerfile
+
+dt="/tmp/dockertest"
+
+mkdir $dt
+
+cd $dt
+
+#  distfiles.gentoo.org
+
+cat > Dockerfile << EOF
+FROM alpine:3.5 as builder
+
+WORKDIR /tmp/gentoo
+
+RUN apk add --no-cache \
+ gnupg \
+ tar \
+ && U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt" \
+ && U2=\$(wget -q -O- $U1 | awk '/stage4/ {print \$1}') \
+ && U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/" \
+ && wget -q -c \$U3\$U2 \$U3\$U2.CONTENTS \$U3\$U2.DIGESTS.asc \
+ && SIGNING_KEY="0xBB572E0E2D182910" \
+ && gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys \${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys \${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys \${SIGNING_KEY} \
+ && gpg --verify *.DIGESTS.asc \
+ && awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c \
+ && tar xjpf stage4*.bz2 --xattrs --numeric-owner \
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
+ && echo 'UTC' > etc/timezone \
+ && rm stage4*
+
+
+FROM scratch
+
+WORKDIR /
+COPY --from=builder /tmp/gentoo/ /
+CMD ["/bin/bash"]
+EOF
+
+
+# gentoo.osuosl.org
+
+
+
+cat > Dockerfile << EOF
+FROM alpine:3.5 as builder
+
+WORKDIR /tmp/gentoo
+
+RUN apk add --no-cache gnupg tar \
+ && U1="http://gentoo.osuosl.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt" \
+ && U2=\$(wget -q -O- $U1 | awk '/stage4/ {print \$1}') \
+ && U3="http://gentoo.osuosl.org/releases/amd64/autobuilds/" \
+ && wget -q -c \$U3\$U2 \$U3\$U2.CONTENTS \$U3\$U2.DIGESTS.asc \
+ && SIGNING_KEY="0xBB572E0E2D182910" \
+ && gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys \${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys \${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys \${SIGNING_KEY} \
+ && gpg --verify *.DIGESTS.asc \
+ && awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c \
+ && tar xjpf stage4*.bz2 --xattrs --numeric-owner \
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
+ && echo 'UTC' > etc/timezone \
+ && rm stage4*
+
+
+FROM scratch
+
+WORKDIR /
+COPY --from=builder /tmp/gentoo/ /
+CMD ["/bin/bash"]
+EOF
+
+
+
+docker build -t c5766/mystage4 .
+
+docker run -it c5766/mystage4
+
+
+http://gentoo.osuosl.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt
+
+
+
+
+
+
+** 20
+
+#+HEADERS: :dir /tmp
+#+BEGIN_SRC sh
+
+git clone git@github.com:cmchaol/stage4-amd64-hardened-squashfs.git
+cd stage4-amd64-hardened-squashfs
+git config user.email "cmchaol@users.noreply.github.com"
+git config user.name "cmchaol"
+
+#+END_SRC
+
+
+** 30
+
+| locate the url    |
+|                   |
+| download the file |
+|                   |
+| verify .asc       |
+|                   |
+| verify            |
+
+|        | aims                         |
+|--------+------------------------------|
+| U1     | find the date of the stage4  |
+|        |                              |
+| U2     | find the 2nd half of the url |
+|        |                              |
+| U3     | the 1st half of the url      |
+|        |                              |
+| $U3$U2 | the url of the stage4        |
+|        |                              |
+
+
+
+*** Dockerfile
+
+dt="/tmp/dockertest"
+
+mkdir $dt
+
+cd $dt
+
+
+cat > Dockerfile << EOF
+FROM ${BOOTSTRAP:-alpine:3.5} as builder
+
+WORKDIR /tmp/gentoo
+
+RUN apk add --no-cache gnupg tar \
+ && U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt" \
+ && U2=$(wget -q -O- $U1 | awk '/stage4/ {print $1}') \
+ && U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/" \
+ && wget -q -c $U3$U2 $U3$U2.CONTENTS $U3$U2.DIGESTS.asc \
+ && SIGNING_KEY="0xBB572E0E2D182910" \
+ && gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys ${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys ${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys ${SIGNING_KEY} \
+ && gpg --verify *.DIGESTS.asc \
+ && awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c \
+ && tar xjpf stage4*.bz2 --xattrs --numeric-owner \
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
+ && echo 'UTC' > etc/timezone \
+ && rm stage4*
+
+
+FROM scratch
+
+WORKDIR /
+COPY --from=builder /tmp/gentoo/ /
+CMD ["/bin/bash"]
+EOF
+
+
+docker build -t c5766/mystage4 .
+
+docker run -it c5766/mystage4
+
+*** shell script conclusion
+
+wd="/tmp/gentoo"   # workdir
+
+mkdir $wd
+
+cd $wd
+
+
+U1="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt"
+
+U2=$(wget -q -O- $U1 | awk '/stage4/ {print $1}')
+
+U3="http://distfiles.gentoo.org/releases/amd64/autobuilds/"
+
+
+wget -q -c $U3$U2 $U3$U2.CONTENTS $U3$U2.DIGESTS.asc
+
+
+SIGNING_KEY="0xBB572E0E2D182910"
+
+gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys ${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys ${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys ${SIGNING_KEY} \
+gpg --verify *.DIGESTS.asc
+
+awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c 
+
+
+
+
+
+*** draft
+
+
+ul="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage4-amd64-hardened+minimal.txt"
+
+curl $ul
+
+wget -q -O- $ul
+
+wget -q -O- $ul | tail -n 1
+
+wget -q -O- $ul | awk 'END {print $1}'  # the 2nd half path of the url $ul2
+
+wget -q -O- $ul | awk 'END {print $2}'  # END
+
+wget -q -O- $ul | awk '/stage4/ {print $1}'   # //
+
+ul2=$(wget -q -O- $ul | awk 'END {print $1}')
+
+ul2=$(wget -q -O- $ul | awk '/stage4/ {print $1}')
+
+echo $ul2    # 20170504/hardened/stage4-amd64-hardened+minimal-20170504.tar.bz2
+
+ul3="http://distfiles.gentoo.org/releases/amd64/autobuilds/"
+
+echo $ul3$ul2  # http://distfiles.gentoo.org/releases/amd64/autobuilds/20170504/hardened/stage4-amd64-hardened+minimal-20170504.tar.bz2
+
+wget -q $ul3$ul2 
+
+wget -q $ul3$ul2.CONTENTS
+
+wget -q $ul3$ul2.DIGESTS.asc
+
+wget -q -c $ul3$ul2 $ul3$ul2.CONTENTS $ul3$ul2.DIGESTS.asc
+
+
+
+
+wget -q -O- $ul3$ul2.DIGESTS.asc	
+
+wget -q     $ul3$ul2.DIGESTS.asc	
+
+wget -q -O- $ul3$ul2.DIGESTS.asc | grep 512 -A 1
+
+SIGNING_KEY="0xBB572E0E2D182910"
+
+gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys ${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys ${SIGNING_KEY} \                       
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys ${SIGNING_KEY} \
+gpg --verify *.DIGESTS.asc
+
+
+awk '/# SHA512 HASH/{getline; print}' *.DIGESTS.asc | sha512sum -c 
+
+
+** 90
+
+*** gentoo/stage3-amd64-hardened
+
+Dockerfile
+FROM busybox
+
+MAINTAINER Gentoo Docker Team
+
+# This one should be present by running the build.sh script
+ADD build.sh /
+
+RUN /build.sh amd64 x86_64 -hardened
+
+# Setup the rc_sys
+RUN sed -e 's/#rc_sys=""/rc_sys="docker"/g' -i /etc/rc.conf
+
+# By default, UTC system
+RUN echo 'UTC' > /etc/timezone
+
+
+
+
+
+
+
+*** docker search gentoo
+
+https://docs.docker.com/engine/reference/commandline/search/#options
+
+
+
+NAME                                   DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
+gentoo/stage3-amd64                                                                    58                   [OK]
+gentoo/portage                                                                         23                   [OK]
+gentoo/stage3-amd64-hardened           Official Gentoo stage3-amd64-hardened Image     15                   [OK]
+gentoo/stage3-amd64-nomultilib         Official Gentoo stage3-amd64-nomultilib Image   13                   [OK]
+vguardiola/gentoo-nginx                Gentoo Nginx                                    3                    [OK]
+vikraman/gentoo                        Minimal gentoo amd64 docker image               2                    [OK]
+thedcg/tl-gentoo                       tl-gentoo                                       2                    [OK]
+vguardiola/gentoo                      Gentoo Docker images                            2                    [OK]
+euskadi31/gentoo-portage               Gentoo portage                                  2                    [OK]
+vguardiola/gentoo-smtp                 gentoo-smtp                                     1                    [OK]
+vguardiola/gentoo-elasticsearch        Gentoo elasticsearch                            1                    [OK]
+vguardiola/gentoo-ejabberd             gentoo-ejabberd                                 1                    [OK]
+tharvik/gentoo-portage                 gentoo with bundled portage snapshot            1                    [OK]
+necrose99/gentoo-arm64                 Arm64 with qemu-arm64 static  AMD64 host h...   1                    [OK]
+hasufell/gentoo-nginx                  Docker nginx gentoo image                       1                    [OK]
+vguardiola/gentoo-amd64                A clean gentoo base                             1                    [OK]
+tharvik/gentoo-git                     tharvik/gentoo-portage with dev-vcs/git         1                    [OK]
+
+
+
+
+
+*** gentoo/gentoo-docker-images
+
+http://distfiles.gentoo.org/releases/amd64/autobuilds/
+
+
+http://distfiles.gentoo.org/releases/amd64/autobuilds/current-stage4-amd64-hardened+minimal/
+
+
+https://github.com/gentoo/gentoo-docker-images
+
+
+https://github.com/gentoo/gentoo-docker-images/blob/master/stage3.Dockerfile
+
+# This Dockerfile creates a gentoo stage3 container image. By default it 
+# creates a stage3-amd64 image. It utilizes a multi-stage build and requires 
+# docker-17.05.0 or later. It fetches a daily snapshot from the official 
+# sources and verifies its checksum as well as its gpg signature.
+
+# As gpg keyservers sometimes are unreliable, we use multiple gpg server pools
+# to fetch the signing key.
+
+
+FROM ${BOOTSTRAP:-alpine:3.5} as builder
+
+WORKDIR /gentoo
+
+ARG ARCH=amd64
+ARG MICROARCH=amd64
+ARG SUFFIX
+ARG DIST="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/"
+ARG SIGNING_KEY="0xBB572E0E2D182910"
+
+RUN echo "Building Gentoo Container image for ${ARCH} ${SUFFIX} fetching from ${DIST}" \
+ && apk --no-cache add gnupg tar wget \
+ && STAGE3PATH="$(wget -q -O- "${DIST}/latest-stage3-${MICROARCH}${SUFFIX}.txt" | tail -n 1 | cut -f 1 -d ' ')" \
+ && STAGE3="$(basename ${STAGE3PATH})" \
+ && wget -q -c "${DIST}/${STAGE3PATH}" "${DIST}/${STAGE3PATH}.CONTENTS" "${DIST}/${STAGE3PATH}.DIGESTS.asc" \
+ && gpg --keyserver hkps.pool.sks-keyservers.net --recv-keys ${SIGNING_KEY} \
+ || gpg --keyserver keys.gnupg.net --recv-keys ${SIGNING_KEY} \
+ || gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys ${SIGNING_KEY} \
+ && gpg --verify "${STAGE3}.DIGESTS.asc" \
+ && awk '/# SHA512 HASH/{getline; print}' ${STAGE3}.DIGESTS.asc | sha512sum -c \
+ && tar xjpf "${STAGE3}" --xattrs --numeric-owner \
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
+ && echo 'UTC' > etc/timezone \
+ && rm ${STAGE3}.DIGESTS.asc ${STAGE3}.CONTENTS ${STAGE3}
+
+FROM scratch
+
+WORKDIR /
+COPY --from=builder /gentoo/ /
+CMD ["/bin/bash"]
+
+
+*** wking/dockerfile
+
+https://github.com/wking/dockerfile
+
+dockerfile/gentoo-portage/Dockerfile.template
+
+https://github.com/wking/dockerfile/blob/master/gentoo-portage/Dockerfile.template
+
+# Copyright (C) 2013-2014 W. Trevor King <wking@tremily.us>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+FROM ${NAMESPACE}/gentoo:${TAG}
+MAINTAINER ${MAINTAINER}
+RUN echo 'GENTOO_MIRRORS="http://distfiles.gentoo.org/"' >> /etc/portage/make.conf
+#RUN echo 'SYNC="rsync://rsync.us.gentoo.org"' >> /etc/portage/make.conf
+RUN mkdir -p /usr/portage
+RUN chown -R portage:portage /usr/portage
+RUN emerge-webrsync --revert=${TAG}
+RUN eselect news read new
+
+* version
+
+| to update readme.org                     |
+|------------------------------------------|
+|                                          |
+| place the cursor inside the source block |
+|                                          |
+| C-u C-c C-v t                            |
+
+
+
+#+HEADER:  :tangle readme.org
+#+BEGIN_SRC sh
+
+https://github.com/cmchaol/stage4-amd64-hardened-squashfs
+
+* version
+
+
+
+
+#+END_SRC
+
+#+RESULTS:
+
