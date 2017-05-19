@@ -1,4 +1,6 @@
 
 https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
-* version
+version
+
+v.1 add  RUN emerge-webrsync

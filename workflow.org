@@ -2,22 +2,87 @@
 https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
 
-* Goals
+* aims
 
 ** todo
 
-| tags       |
-|            |
-| github     |
-|            |
-| docker hub |
-|            |
-| publishing |
-|            |
-| ssh_config |
-|            |
-| workflow   |
-|            |
+| tags            |
+|                 |
+| github          |
+|                 |
+| docker hub      |
+|                 |
+| publishing      |
+|                 |
+| ssh_config      |
+|                 |
+| workflow        |
+|                 |
+| Dockerfile      |
+|                 |
+| gentoo handbook |
+|                 |
+
+
+** workflow
+
+*** practice docker build
+
+| host 1                    | host 2                    |
+| h1                        | h2                        |
+|---------------------------+---------------------------|
+| prepare h2                |                           |
+|                           |                           |
+| login to h2               |                           |
+|                           |                           |
+| prepare Dockerfile        |                           |
+|                           |                           |
+|                           | prepare docker directory  |
+|                           |                           |
+| transfer Dockerfile to h2 |                           |
+|                           |                           |
+|                           | docker build -t myimage . |
+|                           |                           |
+|                           | docker run -it myimage    |
+
+
+*** practice automated build
+
+|   |
+|   |
+
+
+** gentoo handbook
+
+Installing the Gentoo base system
+
+https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Base
+
+
+
+** tags
+
+*** magit tag
+
+https://magit.vc/manual/magit/Tagging.html#Tagging
+
+8.1 Tagging
+
+Also see the git-tag(1) manpage.
+
+t     (magit-tag-popup)
+This prefix command shows the following suffix commands along with the appropriate infix arguments in a popup buffer.
+
+t t     (magit-tag)
+Create a new tag with the given NAME at REV. With a prefix argument annotate the tag.
+
+t k     (magit-tag-delete)
+Delete one or more tags. If the region marks multiple tags (and nothing else), then offer to delete those. Otherwise, prompt for a single tag to be deleted, defaulting to the tag at point.
+
+t p     (magit-tag-prune)
+Offer to delete tags missing locally from REMOTE, and vice versa.
+
+
 
 
 ** ssh_config
@@ -25,11 +90,6 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 *** Simplify Your Life With an SSH Config File
 
 http://nerderati.com/2011/03/17/simplify-your-life-with-an-ssh-config-file/
-
-
-
-
-** tags
 
 
 
@@ -647,14 +707,27 @@ http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
 |      |                  |                   |                        |
 
 
-** publishing
 
-| to update readme.org                     |
-|------------------------------------------|
-|                                          |
+
+** publishing directory
+
 | place the cursor inside the source block |
 |                                          |
 | C-u C-c C-v t                            |
+
+
+*** v.1
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+
+FROM gentoo/stage3-amd64-hardened
+
+RUN emerge-webrsync 
+
+
+#+END_SRC
 
 
 
@@ -663,12 +736,40 @@ http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
 
 https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
-* version
+version
 
+v.1 add  RUN emerge-webrsync 
+
+
+#+END_SRC
+
+
+
+
+
+
+*** v.
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
 
 
 
 #+END_SRC
 
-#+RESULTS:
+#+HEADER:  :tangle readme.org
+#+BEGIN_SRC sh
+
+https://github.com/cmchaol/stage4-amd64-hardened-squashfs
+
+version
+
+v.
+
+
+#+END_SRC
+
+
+
+
 
