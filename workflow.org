@@ -48,8 +48,9 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
 *** practice automated build
 
-|   |
-|   |
+| docker hub             |
+|                        |
+| create automated build |
 
 
 ** gentoo handbook
