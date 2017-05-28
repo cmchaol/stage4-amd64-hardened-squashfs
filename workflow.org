@@ -132,6 +132,22 @@ Offer to delete tags missing locally from REMOTE, and vice versa.
 
 
 
+*** How do you trigger a build for an existing tag?
+
+https://success.docker.com/Cloud/Solve/Trigger_A_Build_For_An_Automated_Build_Tag
+
+Currently the only way to trigger a rebuild for a tag on Docker Hub is:
+
+Remove the tag in Git
+Push the repository
+Add the tag back to Git
+Push the repository again
+Note: there is an open feature request for this at https://github.com/docker/hub-feedback/issues/620
+
+
+
+
+
 ** ssh_config
 
 *** Simplify Your Life With an SSH Config File
@@ -775,7 +791,7 @@ RUN emerge-webrsync
 
 RUN eselect profile set hardened/linux/amd64
 
-RUN emerge --ask --update --deep --newuse @world
+RUN emerge --update --deep --newuse @world
 
 RUN sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
 
@@ -822,7 +838,7 @@ eselect locale list
 eselect locale set en_US.utf8
 
  
-
+Build failed: The command '/bin/sh -c emerge --ask --update --deep --newuse @world' returned a non-zero code: 1
 
 
 *** v.1

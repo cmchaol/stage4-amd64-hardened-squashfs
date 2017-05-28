@@ -5,7 +5,7 @@ RUN emerge-webrsync
 
 RUN eselect profile set hardened/linux/amd64
 
-RUN emerge --ask --update --deep --newuse @world
+RUN emerge --update --deep --newuse @world
 
 RUN sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
 
