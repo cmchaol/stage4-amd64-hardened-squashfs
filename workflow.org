@@ -29,7 +29,29 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
 
 
-docker run -it c5766/stage4-amd64-hardened-squashfs:v.1
+docker run -it c5766/stage4-amd64-hardened-squashfs
+
+
+
+*** practice docker build, docker run on h2
+
+| host 1                    | host 2                    |
+| h1                        | h2                        |
+|---------------------------+---------------------------|
+| prepare h2                |                           |
+|                           |                           |
+| login to h2               |                           |
+|                           |                           |
+|                           | docker run -it myimage    |
+|                           |                           |
+|---------------------------+---------------------------|
+| transfer Dockerfile to h2 |                           |
+|                           |                           |
+|                           | docker build -t myimage . |
+|                           |                           |
+
+
+docker run -it c5766/stage4-amd64-hardened-squashfs
 
 
 
@@ -73,7 +95,21 @@ https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Base
 
 ** tags
 
+*** docker automated build
+
+https://hub.docker.com/r/c5766/stage4-amd64-hardened-squashfs/~/settings/automated-builds/
+
+
+
+
 *** magit tag
+
+| get inside a local git repository |                      |     |
+|                                   |                      |     |
+| add a tag                         | M-x magit-tag        | t t |
+|                                   |                      |     |
+| delete a tag                      | M-x magit-tag-delete | t k |
+|                                   |                      |     |
 
 https://magit.vc/manual/magit/Tagging.html#Tagging
 
@@ -720,11 +756,73 @@ http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
 
 
 
-** publishing directory
+** Dockerfile publishing
 
-| place the cursor inside the source block |
-|                                          |
-| C-u C-c C-v t                            |
+| place the cursor inside each the 2 source blocks |
+|                                                  |
+| C-u C-c C-v t                                    |
+
+
+*** v.2
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+
+FROM gentoo/stage3-amd64-hardened
+
+RUN emerge-webrsync 
+
+RUN eselect profile set hardened/linux/amd64
+
+RUN emerge --ask --update --deep --newuse @world
+
+RUN sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+
+RUN locale-gen
+
+RUN eselect locale set en_US.utf8
+
+RUN . /etc/profile
+
+RUN echo "sys-kernel/hardened-sources symlink" >> /etc/portage/package.use/hardened-sources
+
+RUN emerge sys-kernel/hardened-sources
+
+
+
+#+END_SRC
+
+
+
+#+HEADER:  :tangle readme.org
+#+BEGIN_SRC sh
+
+https://github.com/cmchaol/stage4-amd64-hardened-squashfs
+
+version
+
+v.2 add profile, locale, hardened-sources
+
+v.1 add  RUN emerge-webrsync 
+
+
+#+END_SRC
+
+
+https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Base
+
+eselect profile list
+
+eselect profile set hardened/linux/amd64
+
+eselect locale list
+
+
+eselect locale set en_US.utf8
+
+ 
+
 
 
 *** v.1
