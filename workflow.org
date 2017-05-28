@@ -21,10 +21,17 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 | Dockerfile      |
 |                 |
 | gentoo handbook |
-|                 |
 
 
-** workflow
+** workflows
+
+*** test docker image
+
+
+
+docker run -it c5766/stage4-amd64-hardened-squashfs:v.1
+
+
 
 *** practice docker build
 
@@ -44,6 +51,9 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 |                           | docker build -t myimage . |
 |                           |                           |
 |                           | docker run -it myimage    |
+
+
+docker run -it c5766/stage4-amd64-hardened-squashfs:v.1
 
 
 *** practice automated build
