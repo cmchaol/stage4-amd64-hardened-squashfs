@@ -82,6 +82,9 @@ make menuconfig
 
 Build failed: The command '/bin/sh -c make && make modules_install' returned a non-zero code: 2
 
+No targets specified and no makefile found.  Stop.
+
+
 **** Mount a host directory as a data volume
 
 https://docs.docker.com/engine/tutorials/dockervolumes/#locate-a-volume
