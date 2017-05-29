@@ -4,6 +4,336 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
 * aims
 
+** Dockerfile publishing
+
+| place the cursor inside each the 2 source blocks |
+|                                                  |
+| C-u C-c C-v t                                    |
+
+
+*** v.3
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+
+FROM gentoo/stage3-amd64-hardened
+
+RUN emerge-webrsync 
+
+RUN eselect profile set hardened/linux/amd64
+
+RUN emerge --update --deep --newuse @world
+
+RUN sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+
+RUN locale-gen
+
+RUN eselect locale set en_US.utf8
+
+RUN . /etc/profile
+
+RUN echo "sys-kernel/hardened-sources symlink" >> /etc/portage/package.use/hardened-sources
+
+RUN emerge sys-kernel/hardened-sources
+
+
+
+#+END_SRC
+
+
+
+#+HEADER:  :tangle readme.org
+#+BEGIN_SRC sh
+
+https://github.com/cmchaol/stage4-amd64-hardened-squashfs
+
+version
+
+v.3 compile kernel 
+
+v.2 add profile, locale, hardened-sources
+
+v.1 add  RUN emerge-webrsync 
+
+
+#+END_SRC
+
+https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Kernel
+
+
+
+cd /usr/src/linux
+
+make defconfig
+
+cp .config  /tmp/dv/.config.defconfig
+
+make menuconfig
+
+**** Mount a host directory as a data volume
+
+https://docs.docker.com/engine/tutorials/dockervolumes/#locate-a-volume
+
+dv="/tmp/dv"
+
+mkdir $dv
+
+docker run -v $dv:$dv -it c5766/stage4-amd64-hardened-squashfs
+
+
+
+  docker run                  -v /tmp/dv:/tmp/dv     -it c5766/stage4-amd64-hardened-squashfs
+
+$ docker run -d -P --name web -v /src/webapp:/webapp training/webapp python app.py
+
+This command mounts the host directory, /src/webapp, into the container at /webapp. If the path /webapp already exists inside the container’s image, the /src/webapp mount overlays but does not remove the pre-existing content. Once the mount is removed, the content is accessible again. This is consistent with the expected behavior of the mount command.
+
+
+
+
+**** file systems
+
+|   | kernel option                                               | [2017-05-29 Mon 09:33] |
+|---+-------------------------------------------------------------+------------------------|
+|   | btrfs                                                       |                        |
+|   |                                                             |                        |
+| 1 | File systems                                                |                        |
+|   | Btrfs filesystem support                                    | *                      |
+|   |                                                             |                        |
+| 2 | DOS/FAT/NT Filesystems                                      |                        |
+|   | NTFS file system support                                    | m                      |
+|---+-------------------------------------------------------------+------------------------|
+|   | SquashFS                                                    |                        |
+|   |                                                             |                        |
+| 1 | File systems                                                |                        |
+| 2 | Miscellaneous filesystems                                   | m                      |
+|   | <M>   SquashFS 4.0                                          |                        |
+|   |                                                             |                        |
+|   | File decompression options                                  |                        |
+|   | (X) Decompress files directly                               | x                      |
+|   |                                                             |                        |
+|   | Decompressor parallelisation options                        |                        |
+|   | (X) Use percpu multiple decompressors                       | x                      |
+|   | for parallel I/O                                            |                        |
+|   | [*]     Squashfs XATTR support                              | *                      |
+|   | [*]     Include support for ZLIB                            | *                      |
+|   | [*]     Include support for LZ4                             | *                      |
+|   | [*]     Include support for LZO                             | *                      |
+|   | [*]     Include support for XZ                              | *                      |
+|   | [*]     Use 4K device block size?                           | *                      |
+|   | [*]     Additional option for                               | *                      |
+|   | memory-constrained systems                                  |                        |
+|   |                                                             |                        |
+|   | (3)       Number of fragments                               |                        |
+|   | cached (NEW)                                                |                        |
+|---+-------------------------------------------------------------+------------------------|
+|   | zram                                                        |                        |
+|   |                                                             |                        |
+| 1 | Processor type and features                                 |                        |
+| 2 | Memory allocator for compressed pages                       | m                      |
+| 2 | ' Use page table mapping to access object in zsmalloc (NEW) | *                      |
+|   | ' Export zsmalloc statistics (NEW)                          | *                      |
+|   |                                                             |                        |
+| 1 | Device Drivers                                              |                        |
+| 2 | Block devices                                               |                        |
+|   | Compressed RAM block device support                         | m                      |
+|   | Enable LZ4 algorithm support                                | missing                |
+|---+-------------------------------------------------------------+------------------------|
+|   | zswap                                                       |                        |
+|   |                                                             |                        |
+| 1 | Processor type and features                                 |                        |
+|   |                                                             |                        |
+| 2 | Enable frontswap to cache swap pages if tmem is present     | *                      |
+| 2 | Compressed cache for swap pages (EXPERIMENTAL)              | *                      |
+| 2 | Low density storage for compressed pages                    | m                      |
+|   | Up to 3x density storage for compressed pages               | m                      |
+|   |                                                             |                        |
+|---+-------------------------------------------------------------+------------------------|
+|   | browser                                                     |                        |
+|   |                                                             |                        |
+| 1 | General setup                                               |                        |
+| 2 | Namespaces support                                          |                        |
+|   | User namespace (chrome)                                     | *                      |
+|---+-------------------------------------------------------------+------------------------|
+|   | fuse                                                        |                        |
+|   | overlayfs                                                   |                        |
+|   |                                                             |                        |
+| 1 | File systems                                                |                        |
+| 2 | FUSE (Filesystem in Userspace) support                      |                        |
+| 2 | Overlay filesystem support                                  |                        |
+|---+-------------------------------------------------------------+------------------------|
+|   | cups, remove kernel usb print                               |                        |
+|   |                                                             |                        |
+| 1 | Device Drivers                                              |                        |
+| 2 | USB support                                                 |                        |
+| 3 | USB Printer support                                         | N 20170224             |
+
+
+
+cp .config  /tmp/dv/.config.defconfig.netcard.fs
+
+
+
+
+****  net card drivers
+
+|   | kernel option                                             |              | [2017-05-29 Mon 09:33] |
+|---+-----------------------------------------------------------+--------------+------------------------|
+|   | net card                                                  |              |                        |
+|   |                                                           |              |                        |
+| 1 | Device Drivers                                            |              |                        |
+| 2 | Network device suppor                                     |              |                        |
+| 3 | Ethernet driver support                                   |              |                        |
+|   |                                                           |              |                        |
+|   | Atheros devices                                           |              |                        |
+|   | Atheros L1C Gigabit Ethernet support                      | h77md3h      | m                      |
+|   |                                                           |              |                        |
+|   | Marvell Yukon 2                                           |              |                        |
+|   |                                                           |              |                        |
+|   | RTL8111/8168/8411                                         |              |                        |
+|   | Realtek 8169         hardened 4.7.10                      | M4A87TD/USB3 | m                      |
+|   | Depends on: NETDEVICES [=y] && ETHERNET [=y] && (PCI [=y] |              |                        |
+|   | PARPORT [=n] && X86 [=y])                                 |              |                        |
+|   |                                                           |              |                        |
+| 1 | Bus options                                               |              |                        |
+| 2 | PCI support                                               |              |                        |
+|   |                                                           |              |                        |
+|---+-----------------------------------------------------------+--------------+------------------------|
+|   | wifi                                                      |              |                        |
+|   |                                                           |              |                        |
+| 1 | Device Drivers                                            |              |                        |
+| 2 | Network device support                                    |              |                        |
+| 3 | Wireless LAN                                              |              |                        |
+|   | Intersil devices  deprecated on 4.4.26                    |              | m                      |
+|   | Softmac Prism54 support                                   |              | m                      |
+|   | Prism54 USB support                                       |              | m                      |
+|   |                                                           |              |                        |
+| 1 | Networking support                                        |              |                        |
+| 2 | Wireless                                                  |              |                        |
+|   | cfg80211 - wireless configuration API                     |              | m                      |
+|   | Generic IEEE 802.11 Networking \                          |              | m                      |
+|   | Stack (mac80211                                           |              |                        |
+
+cp .config  /tmp/dv/.config.defconfig.netcard
+
+
+*** v.2
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+
+FROM gentoo/stage3-amd64-hardened
+
+RUN emerge-webrsync 
+
+RUN eselect profile set hardened/linux/amd64
+
+RUN emerge --update --deep --newuse @world
+
+RUN sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+
+RUN locale-gen
+
+RUN eselect locale set en_US.utf8
+
+RUN . /etc/profile
+
+RUN echo "sys-kernel/hardened-sources symlink" >> /etc/portage/package.use/hardened-sources
+
+RUN emerge sys-kernel/hardened-sources
+
+
+
+#+END_SRC
+
+
+
+#+HEADER:  :tangle readme.org
+#+BEGIN_SRC sh
+
+https://github.com/cmchaol/stage4-amd64-hardened-squashfs
+
+version
+
+v.2 add profile, locale, hardened-sources
+
+v.1 add  RUN emerge-webrsync 
+
+
+#+END_SRC
+
+
+https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Base
+
+eselect profile list
+
+eselect profile set hardened/linux/amd64
+
+eselect locale list
+
+
+eselect locale set en_US.utf8
+
+ 
+Build failed: The command '/bin/sh -c emerge --ask --update --deep --newuse @world' returned a non-zero code: 1
+
+
+*** v.1
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+
+FROM gentoo/stage3-amd64-hardened
+
+RUN emerge-webrsync 
+
+
+#+END_SRC
+
+
+
+#+HEADER:  :tangle readme.org
+#+BEGIN_SRC sh
+
+https://github.com/cmchaol/stage4-amd64-hardened-squashfs
+
+version
+
+v.1 add  RUN emerge-webrsync 
+
+
+#+END_SRC
+
+
+
+
+
+
+*** v.
+
+#+HEADER:  :tangle Dockerfile
+#+BEGIN_SRC sh
+
+
+
+#+END_SRC
+
+#+HEADER:  :tangle readme.org
+#+BEGIN_SRC sh
+
+https://github.com/cmchaol/stage4-amd64-hardened-squashfs
+
+version
+
+v.
+
+
+#+END_SRC
+
+
 ** todo
 
 | tags            |
@@ -27,11 +357,21 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
 *** test docker image
 
-
-
 docker run -it c5766/stage4-amd64-hardened-squashfs
 
 
+dv="/tmp/dv"
+
+mkdir $dv
+
+docker run \
+-v $dv \
+-it c5766/stage4-amd64-hardened-squashfs 
+
+
+https://docs.docker.com/engine/tutorials/dockervolumes/#add-a-data-volume
+
+$ docker run -d -P --name web -v /webapp training/webapp python app.py
 
 *** practice docker build, docker run on h2
 
@@ -768,131 +1108,6 @@ http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
 |      |                  |                   |                        |
 |    6 |                  |                   | create automated build |
 |      |                  |                   |                        |
-
-
-
-
-** Dockerfile publishing
-
-| place the cursor inside each the 2 source blocks |
-|                                                  |
-| C-u C-c C-v t                                    |
-
-
-*** v.2
-
-#+HEADER:  :tangle Dockerfile
-#+BEGIN_SRC sh
-
-
-FROM gentoo/stage3-amd64-hardened
-
-RUN emerge-webrsync 
-
-RUN eselect profile set hardened/linux/amd64
-
-RUN emerge --update --deep --newuse @world
-
-RUN sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
-
-RUN locale-gen
-
-RUN eselect locale set en_US.utf8
-
-RUN . /etc/profile
-
-RUN echo "sys-kernel/hardened-sources symlink" >> /etc/portage/package.use/hardened-sources
-
-RUN emerge sys-kernel/hardened-sources
-
-
-
-#+END_SRC
-
-
-
-#+HEADER:  :tangle readme.org
-#+BEGIN_SRC sh
-
-https://github.com/cmchaol/stage4-amd64-hardened-squashfs
-
-version
-
-v.2 add profile, locale, hardened-sources
-
-v.1 add  RUN emerge-webrsync 
-
-
-#+END_SRC
-
-
-https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Base
-
-eselect profile list
-
-eselect profile set hardened/linux/amd64
-
-eselect locale list
-
-
-eselect locale set en_US.utf8
-
- 
-Build failed: The command '/bin/sh -c emerge --ask --update --deep --newuse @world' returned a non-zero code: 1
-
-
-*** v.1
-
-#+HEADER:  :tangle Dockerfile
-#+BEGIN_SRC sh
-
-
-FROM gentoo/stage3-amd64-hardened
-
-RUN emerge-webrsync 
-
-
-#+END_SRC
-
-
-
-#+HEADER:  :tangle readme.org
-#+BEGIN_SRC sh
-
-https://github.com/cmchaol/stage4-amd64-hardened-squashfs
-
-version
-
-v.1 add  RUN emerge-webrsync 
-
-
-#+END_SRC
-
-
-
-
-
-
-*** v.
-
-#+HEADER:  :tangle Dockerfile
-#+BEGIN_SRC sh
-
-
-
-#+END_SRC
-
-#+HEADER:  :tangle readme.org
-#+BEGIN_SRC sh
-
-https://github.com/cmchaol/stage4-amd64-hardened-squashfs
-
-version
-
-v.
-
-
-#+END_SRC
 
 
 
