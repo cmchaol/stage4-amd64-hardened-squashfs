@@ -18,3 +18,5 @@ RUN . /etc/profile
 RUN echo "sys-kernel/hardened-sources symlink" >> /etc/portage/package.use/hardened-sources
 
 RUN emerge sys-kernel/hardened-sources
+
+COPY kernel-configurations/.config.defconfig.netcard.fs /usr/src/linux/.config
