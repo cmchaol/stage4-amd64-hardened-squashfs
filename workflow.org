@@ -39,9 +39,9 @@ RUN emerge sys-kernel/hardened-sources
 
 COPY kernel-configurations/.config.defconfig.netcard.fs /usr/src/linux/.config
 
-RUN cd /usr/src/linux
+# RUN cd /usr/src/linux
 
-RUN make && make modules_install
+# RUN make && make modules_install
 
 
 
@@ -77,6 +77,10 @@ make defconfig
 cp .config  /tmp/dv/.config.defconfig
 
 make menuconfig
+
+**** error
+
+Build failed: The command '/bin/sh -c make && make modules_install' returned a non-zero code: 2
 
 **** Mount a host directory as a data volume
 
