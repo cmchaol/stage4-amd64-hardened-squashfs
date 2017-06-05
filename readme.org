@@ -3,8 +3,6 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
 version
 
-v.3 compile kernel 
-
 v.2 add profile, locale, hardened-sources
 
 v.1 add  RUN emerge-webrsync
