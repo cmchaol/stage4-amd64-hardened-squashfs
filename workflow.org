@@ -13,6 +13,39 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
 *** v.3
 
+
+**** error
+
+Build failed: The command '/bin/sh -c make && make modules_install' returned a non-zero code: 2
+
+No targets specified and no makefile found.  Stop.
+
+I revert back to v.2
+
+
+
+verify rc_sys="docker"
+
+cat /etc/rc.conf | grep rc_sys
+
+https://hub.docker.com/r/gentoo/stage3-amd64-hardened/~/dockerfile/
+
+# Setup the rc_sys
+RUN sed -e 's/#rc_sys=""/rc_sys="docker"/g' -i /etc/rc.conf
+
+https://wiki.gentoo.org/wiki/OpenRC/Baselayout_1_to_2_migration
+
+
+
+sed -e 's/#rc_sys=""/rc_sys="docker"/g' -i /etc/rc.conf
+
+test the build
+
+
+
+
+**** Dockerfile
+
 #+HEADER:  :tangle Dockerfile
 #+BEGIN_SRC sh
 
@@ -51,6 +84,7 @@ RUN make && make modules_install
 #+END_SRC
 
 
+**** readme.org
 
 #+HEADER:  :tangle readme.org
 #+BEGIN_SRC sh
@@ -79,12 +113,6 @@ make defconfig
 cp .config  /tmp/dv/.config.defconfig
 
 make menuconfig
-
-**** error
-
-Build failed: The command '/bin/sh -c make && make modules_install' returned a non-zero code: 2
-
-No targets specified and no makefile found.  Stop.
 
 
 **** Mount a host directory as a data volume
