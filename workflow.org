@@ -16,6 +16,20 @@ https://github.com/cmchaol/stage4-amd64-hardened-squashfs
 
 **** error
 
+Step 12/13 : RUN make defconfig
+
+ ---> Running in 46d45a1559b7
+
+[91mmake: *** No rule to make target 'defconfig'.  Stop.
+[0m
+Removing intermediate container 46d45a1559b7
+
+The command '/bin/sh -c make defconfig' returned a non-zero code: 2
+
+
+
+
+
 Build failed: The command '/bin/sh -c make && make modules_install' returned a non-zero code: 2
 
 No targets specified and no makefile found.  Stop.
@@ -40,8 +54,6 @@ https://wiki.gentoo.org/wiki/OpenRC/Baselayout_1_to_2_migration
 sed -e 's/#rc_sys=""/rc_sys="docker"/g' -i /etc/rc.conf
 
 test the build
-
-
 
 
 **** Dockerfile
@@ -72,7 +84,9 @@ RUN emerge sys-kernel/hardened-sources
 
 RUN cd /usr/src/linux
 
-RUN make defconfig
+# RUN make defconfig
+
+RUN make ARCH=x86_64 x86_64_defconfig 
 
 # COPY kernel-configurations/.config.defconfig.netcard.fs /usr/src/linux/.config
 
@@ -82,6 +96,8 @@ RUN make && make modules_install
 
 
 #+END_SRC
+
+#+RESULTS:
 
 
 **** readme.org
@@ -1155,5 +1171,92 @@ http://orgmode.org/manual/Extracting-source-code.html#Extracting-source-code
 
 
 
+
+
+
+* skills
+
+** defconfig
+
+/usr/src/linux/arch/x86/configs/x86_64_defconfig
+
+make ARCH=x86 help | grep defconfig
+  defconfig       - New config with default from ARCH supplied defconfig
+  savedefconfig   - Save current config as ./defconfig (minimal config)
+  alldefconfig    - New config with all symbols set to default
+  olddefconfig    - Same as silentoldconfig but sets new symbols to their
+  i386_defconfig           - Build for i386
+  x86_64_defconfig         - Build for x86_64
+
+make ARCH=x86 defconfig 
+
+make ARCH=x86_64 x86_64_defconfig 
+
+
+make ARCH=x86_64 help | grep defconfig
+
+make ARCH=x86 help | grep defconfig
+  defconfig       - New config with default from ARCH supplied defconfig
+  savedefconfig   - Save current config as ./defconfig (minimal config)
+  alldefconfig    - New config with all symbols set to default
+  olddefconfig    - Same as silentoldconfig but sets new symbols to their
+  i386_defconfig           - Build for i386
+  x86_64_defconfig         - Build for x86_64
+
+
+
+https://stackoverflow.com/questions/27899104/creating-defconfig-file-from-config
+
+I have done make menuconfig for a board defconfig and modified few configurations. When I select save, a new .config was created in the Kernel top directory.
+
+I want to create new defconfig for this .config file created.
+
+Can I copy the .config as a new defconfig and copy to arch/arm/configs/?
+
+$ cp .config arch/arm/configs/board_new_defconfig
+
+
+I think you have to do just one command and use the created file as you want to.
+
+% make savedefconfig 
+% cp defconfig arch/arm/configs/my_cool_defconfig
+To get all possible targets just run
+
+% make help
+
+
+
+https://stackoverflow.com/questions/41885015/what-exactly-does-linux-kernels-make-defconfig-do
+
+Useful commands
+
+You can use simpler syntax for make defconfig, like:
+
+$ make ARCH=arm your_board_defconfig
+
+
+See the full list of available defconfigs with:
+
+$ make ARCH=arm help | grep defconfig
+
+make ARCH=x86 help | grep defconfig
+
+
+If you need to do reverse action (i.e. create a neat small defconfig from extensive .config), you can use savedefconfig rule:
+
+$ make ARCH=arm savedefconfig
+Also, as 0andriy mentioned, you can use diffconfig script to see changes from one .config to another one:
+
+$ scripts/diffconfig .config_old .config_new
+
+
+
+
+
+
+
+Generates a new kernel configuration with the default answer being used for all options. The default values are taken from a file located in the arch/$ARCH/defconfig file, where $ARCH refers to the specific architecture for which the kernel is being built.
+
+http://archive.oreilly.com/pub/a/linux/excerpts/9780596100797/kernel-build-command-line-reference.html
 
 

@@ -21,7 +21,9 @@ RUN emerge sys-kernel/hardened-sources
 
 RUN cd /usr/src/linux
 
-RUN make defconfig
+# RUN make defconfig
+
+RUN make ARCH=x86_64 x86_64_defconfig 
 
 # COPY kernel-configurations/.config.defconfig.netcard.fs /usr/src/linux/.config
 
