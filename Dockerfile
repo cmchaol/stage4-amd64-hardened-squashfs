@@ -23,8 +23,8 @@ RUN cd /usr/src/linux
 
 # RUN make defconfig
 
-RUN make ARCH=x86_64 x86_64_defconfig 
+# RUN make ARCH=x86_64 x86_64_defconfig 
 
 # COPY kernel-configurations/.config.defconfig.netcard.fs /usr/src/linux/.config
 
-RUN make && make modules_install
+# RUN make && make modules_install
